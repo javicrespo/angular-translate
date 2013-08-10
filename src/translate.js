@@ -199,7 +199,8 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
     for (key in data) {
       if (!data.hasOwnProperty(key)) continue;
       val = data[key];
-      if (angular.isObject(val)) {
+      //special objects (start with '$') are not flattened
+      if (angular.isObject(val) && key.indexOf('$')!==0) {
         flatObject(val, path.concat(key), result);
       } else {
         keyWithPath = path.length ? ("" + path.join(NESTED_OBJECT_DELIMITER) + NESTED_OBJECT_DELIMITER + key) : key;
@@ -667,7 +668,11 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
 
       // if the translation id exists, we can just interpolate it
       if (table && table.hasOwnProperty(translationId)) {
-        return Interpolator.interpolate(table[translationId], interpolateParams);
+        var val = table[translationId];
+        //If it's an object there is no way to interpolate nor we want it
+        if(angular.isObject(val))
+          return val;
+        return Interpolator.interpolate(val, interpolateParams);
       }
 
       // looks like the requested translation id doesn't exists.
@@ -686,6 +691,9 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
 
         // check if a translation for the fallback language exists
         if (translation) {
+           //If it's an object there is no way to interpolate nor we want it
+          if(angular.isObject(translation))
+            return translation;
           var returnVal;
           // temporarly letting Interpolator know we're using fallback language now.
           Interpolator.setLocale($fallbackLanguage);
